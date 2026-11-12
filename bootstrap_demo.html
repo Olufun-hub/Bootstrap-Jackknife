@@ -102,6 +102,11 @@
   .note{margin-top:12px;font-size:14px;padding:10px 12px;border-radius:12px;background:#f8f6f1;color:var(--ink)}
   .note.warn{background:#fdecea;color:#8a2c20}
   .note.good{background:#e7f5ee;color:#1f5e44}
+  .defs{display:grid;grid-template-columns:1fr;gap:2px 22px;margin-top:8px}
+  @media(min-width:820px){.defs{grid-template-columns:1fr 1fr}}
+  .def{padding:9px 0;border-bottom:1px solid #f1ece2}
+  .dk{font-weight:700;color:#9a4a1c;font-size:14px;margin-bottom:2px}
+  .dd{font-size:14.5px;color:var(--ink)}
 </style>
 </head>
 <body>
@@ -405,28 +410,47 @@ function jReset(){jdone=[];jlast=-1;renderTilesJack(-1);$("draws").innerHTML="";
 
 /* ---------- talking points ---------- */
 function renderSay(){
-  const v=V(),n=v.length;
+  const v=V(),n=v.length, s=SNAME[statKey];
+  const item=(k,d)=>`<div class="def"><div class="dk">${k}</div><div class="dd">${d}</div></div>`;
+  let html;
   if(mode==="boot"){
-    const tail = statKey==="median"
-      ? `<li>The histogram is <b>lumpy</b>: a median of ${n} numbers can only take a handful of values. There is no neat formula for its se; the bootstrap gives one anyway.</li>`
-      : statKey==="mean" ? `<li>Compare <b>bootstrap se</b> with the formula <b>σ̂/√n</b>: they agree (the bootstrap uses the divide-by-<i>n</i> variance).</li>`
-      : `<li>The variance histogram is <b>skewed right</b>: variances can't go below 0. The percentile CI handles that automatically.</li>`;
-    $("say").innerHTML=`<div class="t">What to say while clicking</div><ol>
-      <li><b>Draw one (slow):</b> “Each draw puts the value back, so some show up twice and some not at all.” Point at the badges and the grey tiles.</li>
-      <li>“This resample is a <i>pretend new sample</i> from the same population. Its ${SNAME[statKey]} is a little different from the original.”</li>
-      <li><b>+10, then +1,000:</b> “Doing it thousands of times shows how much the ${SNAME[statKey]} wobbles from sample to sample. The width of this histogram is the standard error.”</li>
-      <li>“On average about <b>a third</b> of the points are left out of each resample: (1 − 1/n)<sup>n</sup> = ${Math.round(100*Math.pow(1-1/n,n))}% for n = ${n}, heading to e<sup>−1</sup> ≈ 37% for large n.”</li>${tail}</ol>`;
+    const fse = statKey==="mean"
+      ? "The textbook formula for the standard error of the mean, σ̂/√n. It is shown so you can check the bootstrap: the two should be close."
+      : statKey==="median" ? "There is no simple formula for the standard error of a median. This is exactly the situation where the bootstrap is useful."
+      : "The formula for the standard error of a variance is messy and depends on the shape of the data. The bootstrap avoids needing it.";
+    html=`<div class="t">What each output means</div><div class="defs">
+      ${item("Data tiles (step 1)","Your original sample of n = "+n+" observations. In each resample, an orange tile was picked; the badge (×2, ×3…) counts how many times. A grey tile was not picked at all this time.")}
+      ${item("Full-sample "+s,"The "+s+" of the original data. This is the estimate we want a standard error for.")}
+      ${item("Current resample (step 2)","One bootstrap sample: n values drawn at random from your data <b>with replacement</b>. Same size as the original, but some values repeat and others are missing. It plays the role of a new sample from the population.")}
+      ${item("Last resample's "+s,"The "+s+" recomputed on that one resample. Each click produces one of these numbers.")}
+      ${item("Histogram (step 3)","All the resample "+s+"s collected so far. Its <b>spread</b> shows how much the estimate would change from sample to sample; its <b>shape</b> shows whether that variation is symmetric or skewed.")}
+      ${item("Orange dashed line","The full-sample "+s+". The histogram should be roughly centered on it.")}
+      ${item("Green bar","The middle 95% of the histogram, from the 2.5th to the 97.5th percentile. This is the 95% percentile confidence interval.")}
+      ${item("Resamples B","How many bootstrap samples have been drawn. More resamples make the histogram, standard error and interval more stable; they do not add new information beyond your n observations.")}
+      ${item("Bootstrap se","The standard deviation of all the resample "+s+"s. This is the bootstrap estimate of the <b>standard error</b> of the "+s+".")}
+      ${item("95% CI","The 2.5th and 97.5th percentiles of the resample "+s+"s. A range of plausible values for the true population "+(statKey==="var"?"variance":statKey)+". Shown once B ≥ 40.")}
+      ${item("Formula se",fse)}
+      ${item("Avg. share of points left out","On average, the fraction of original observations missing from a resample. Theory says (1 − 1/n)<sup>n</sup> = "+Math.round(100*Math.pow(1-1/n,n))+"% for n = "+n+", approaching e<sup>−1</sup> ≈ 37% for large n.")}
+    </div>`;
   }else{
-    const tail = statKey==="var"
-      ? `<li><b>The payoff:</b> “The plug-in variance divides by n, so it is biased low. The jackknife correction lands <i>exactly</i> on S², which divides by n − 1.” (Use the 5-point data: 9.2 → 11.5.)</li>`
-      : statKey==="mean" ? `<li>“For the mean there is no bias, so the correction is 0, and the jackknife se is exactly s/√n. A good sanity check.”</li>`
-      : `<li>“Look how few distinct values the dots take: removing one point hardly moves a median. That is why the jackknife fails here; use the bootstrap.”</li>`;
-    $("say").innerHTML=`<div class="t">What to say while clicking</div><ol>
-      <li><b>Leave out next:</b> “Remove one observation (red), recompute with the other ${n-1}, put it back.” Each click adds one dot.</li>
-      <li>“Unlike the bootstrap, nothing is random: there are exactly ${n} leave-one-out samples, and everyone gets the same answer.”</li>
-      <li>“The average of the dots (navy line) sits a bit away from the full-sample estimate (orange). That gap, times n − 1, estimates the bias.”</li>
-      <li><b>Why n − 1?</b> “Bias is roughly β/n. Dropping one point changes it to β/(n−1). The difference is about β/n², so multiplying by n − 1 recovers β/n.”</li>${tail}</ol>`;
+    const nt = statKey==="var" ? "For the plug-in variance (÷n), the corrected estimate equals S² (÷(n−1)) exactly: the jackknife removes the bias completely."
+      : statKey==="mean" ? "For the mean, the bias is 0 (the mean is unbiased), and the jackknife se equals s/√n exactly."
+      : "For the median, leaving one point out barely moves the estimate, so the jackknife se is unreliable. Use the bootstrap instead.";
+    html=`<div class="t">What each output means</div><div class="defs">
+      ${item("Data tiles (step 1)","Your original sample of n = "+n+" observations. The <b>red</b> tile is the one point left out in the current step; the blue tiles are the n − 1 points kept.")}
+      ${item("Full-sample "+s,"The "+s+" computed on all n observations. This is the estimate being checked for bias.")}
+      ${item("The n − 1 points kept (step 2)","The data with the current point removed. The jackknife makes exactly n of these subsamples, one per observation. Nothing is random.")}
+      ${item("Estimate without it","The "+s+" of the n − 1 kept points. One number per point left out; also listed in the table.")}
+      ${item("Dots on the chart","One dot per point left out, placed at the estimate without that point. The label under each dot says which point was removed. How spread out the dots are drives the standard error.")}
+      ${item("Orange line (full)","The full-sample estimate.")}
+      ${item("Navy line (avg)","The average of all the dots. If it sits away from the orange line, the estimator changes systematically when the sample gets smaller, which signals bias.")}
+      ${item("Bias estimate","(n − 1) × (average − full). The gap between the two lines, scaled up by n − 1. A negative value means the estimator tends to come out too low.")}
+      ${item("Jackknife-corrected estimate","The full-sample estimate minus the estimated bias, i.e. n·full − (n − 1)·average. This is the green line (jack) on the chart.")}
+      ${item("Jackknife se","√[(n − 1)/n · Σ(dot − average)²]. An estimate of the standard error, based on how much the estimate moves when each point is removed.")}
+      ${item("Message box",nt)}
+    </div>`;
   }
+  $("say").innerHTML=html;
 }
 
 /* ---------- wiring ---------- */
