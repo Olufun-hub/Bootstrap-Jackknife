@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bootstrap &amp; Jackknife Demo — QMB 6875</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f1ea; --panel:#ffffff; --ink:#18213a; --muted:#6c7489; --line:#ebe6db;
+    --navy:#1f3a68; --navy2:#2f5d9e; --sky:#8fb0de;
+    --coral:#e07a3f; --coral-soft:#fdeee3; --coral-line:#f2c6a6;
+    --green:#2e8a64; --cream:#fffaf0;
+    --shadow:0 1px 2px rgba(24,33,58,.05),0 8px 24px rgba(24,33,58,.07);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 500px at 85% -10%,#e6eefb 0,transparent 60%),
+      radial-gradient(900px 400px at -10% 10%,#fbeee2 0,transparent 55%),var(--bg);
+    color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.5;min-height:100vh}
+  .wrap{max-width:1140px;margin:0 auto;padding:26px 20px 44px}
+  header{background:linear-gradient(135deg,#1f3a68 0%,#2f5d9e 60%,#4a78b8 100%);color:#fff;border-radius:22px;
+    padding:26px 28px 24px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+  header:after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%)}
+  .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;font-weight:600}
+  header h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:34px;margin:6px 0 6px;letter-spacing:-.01em}
+  header p{margin:0;opacity:.9;max-width:720px}
+  header p b{color:#ffd6b8}
+  .controls{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center;margin:20px 2px 16px}
+  .group{display:flex;align-items:center;gap:8px}
+  .seg{display:inline-flex;padding:4px;border-radius:999px;background:#fff;box-shadow:var(--shadow);gap:2px}
+  .seg button{border:0;background:transparent;padding:8px 15px;font:500 14px Inter,sans-serif;color:var(--muted);cursor:pointer;border-radius:999px;transition:all .2s}
+  .seg button:hover{color:var(--ink)}
+  .seg button.on{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(31,58,104,.3)}
+  .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media(min-width:920px){.grid{grid-template-columns:1fr 1.05fr}}
+  .card{background:var(--panel);border-radius:20px;padding:20px 20px 18px;box-shadow:var(--shadow);border:1px solid rgba(235,230,219,.7)}
+  .card h2{display:flex;align-items:center;gap:10px;font-size:14px;margin:0 0 14px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);font-weight:700}
+  .step{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--coral-soft);color:var(--coral);font-size:13px;font-weight:700;letter-spacing:0}
+  .tiles{display:flex;flex-wrap:wrap;gap:10px}
+  .tile{position:relative;min-width:64px;padding:12px 10px;border-radius:14px;text-align:center;
+    font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:500;background:linear-gradient(#fff,#f8f6f1);
+    border:1.5px solid var(--line);box-shadow:0 2px 0 #ece7dc;transition:all .2s ease}
+  .tile.hit{border-color:var(--coral);background:linear-gradient(#fff6ef,var(--coral-soft));box-shadow:0 2px 0 var(--coral-line);color:#7a3a14}
+  .tile.flash{transform:translateY(-4px) scale(1.1);box-shadow:0 10px 20px rgba(224,122,63,.3)}
+  .tile.out{opacity:.35;filter:grayscale(1)}
+  .badge{position:absolute;top:-10px;right:-10px;background:var(--coral);color:#fff;border-radius:999px;
+    font:700 12px Inter,sans-serif;min-width:26px;height:24px;line-height:24px;padding:0 6px;box-shadow:0 2px 6px rgba(224,122,63,.45);border:2px solid #fff}
+  .orig{margin-top:14px;font-size:15px;color:var(--muted)}
+  .orig b{font-family:'JetBrains Mono',monospace;color:var(--ink)}
+  .divider{height:1px;background:var(--line);margin:18px 0 16px}
+  .draws{display:flex;flex-wrap:wrap;gap:7px;min-height:46px;margin:2px 0 10px;padding:10px;border-radius:14px;background:var(--cream);border:1.5px dashed #ecdcc3}
+  .chip{font-family:'JetBrains Mono',monospace;font-size:16px;padding:6px 11px;border-radius:10px;background:#fff;border:1.5px solid var(--coral-line);color:#7a3a14;animation:pop .25s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(.4) translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+  .stat-line{font-size:15px;color:var(--muted)}
+  .stat-line b{color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:18px}
+  .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+  .btn{border:0;background:linear-gradient(135deg,var(--coral),#e8925c);color:#fff;border-radius:12px;padding:11px 18px;
+    font:600 15px Inter,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(224,122,63,.35);transition:transform .15s,box-shadow .15s}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(224,122,63,.45)}
+  .btn.ghost{background:#fff;color:var(--navy);box-shadow:inset 0 0 0 1.5px #cfd9ea}
+  .btn.ghost:hover{box-shadow:inset 0 0 0 1.5px var(--navy2)}
+  .btn:disabled{opacity:.45;cursor:default;transform:none}
+  .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .num{border-radius:14px;padding:10px 12px;background:#f8f6f1}
+  .num.hl{background:linear-gradient(135deg,#eaf1fb,#dfe9f8)}
+  .num.hl .v{color:var(--navy)}
+  .num .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .num .v{font-family:'JetBrains Mono',monospace;font-size:21px;margin-top:3px;font-weight:500}
+  svg text{font-family:Inter,sans-serif}
+  #hist rect.bar{transition:y .25s ease,height .25s ease}
+  .say{margin-top:18px;background:var(--panel);border-radius:20px;padding:18px 22px;font-size:15px;box-shadow:var(--shadow);border-left:5px solid var(--coral)}
+  .say .t{font-family:Fraunces,Georgia,serif;font-size:19px;font-weight:600;margin-bottom:4px}
+  .say ol{margin:8px 0 0 20px;padding:0}
+  .say li{margin:5px 0}
+  .say li::marker{color:var(--coral);font-weight:700}
+  .say b{color:#9a4a1c}
+  .legend{display:flex;gap:16px;font-size:13px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+  .sw{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:6px}
+  footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+  code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:#fff;padding:2px 7px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--line)}
+  .modebar{display:flex;justify-content:center;margin:20px 0 4px}
+  .modebar .seg{padding:5px}
+  .modebar .seg button{font-size:16px;font-weight:600;padding:10px 26px}
+  .modebar .seg button.on{background:linear-gradient(135deg,var(--coral),#e8925c);box-shadow:0 3px 12px rgba(224,122,63,.4)}
+  .hide{display:none!important}
+  .tile.dropped{opacity:.9;background:#fff;border-color:#c64a3a;color:#c64a3a;text-decoration:line-through;box-shadow:0 2px 0 #f0c3bc;transform:translateY(-3px)}
+  .tile.dropped:after{content:"left out";position:absolute;left:50%;bottom:-18px;transform:translateX(-50%);font:600 10px Inter,sans-serif;color:#c64a3a;text-decoration:none;letter-spacing:.04em;white-space:nowrap}
+  .tile.kept{border-color:#a9c0e3;background:linear-gradient(#fff,#eef3fb);box-shadow:0 2px 0 #d3dff1}
+  .chip.kept{border-color:#c4d4ec;color:var(--navy)}
+  .jtable{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+  .jtable th{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-weight:600}
+  .jtable td{padding:5px 8px;border-bottom:1px solid #f3efe6;font-family:'JetBrains Mono',monospace}
+  .jtable tr.new td{background:#fff6ef}
+  .tablewrap{max-height:190px;overflow:auto;border-radius:12px;background:#fcfbf8}
+  .num.ok{background:linear-gradient(135deg,#e7f5ee,#d9efe4)}
+  .num.ok .v{color:var(--green)}
+  .formula{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);margin-top:2px}
+  .note{margin-top:12px;font-size:14px;padding:10px 12px;border-radius:12px;background:#f8f6f1;color:var(--ink)}
+  .note.warn{background:#fdecea;color:#8a2c20}
+  .note.good{background:#e7f5ee;color:#1f5e44}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">QMB 6875 · Session 3</div>
+    <h1 id="title">Resampling your own data</h1>
+    <p id="subtitle"></p>
+  </header>
+
+  <div class="modebar"><div class="seg" id="modeSeg">
+    <button data-k="boot" class="on">Bootstrap</button>
+    <button data-k="jack">Jackknife</button>
+  </div></div>
+
+  <div class="controls">
+    <div class="group"><span class="lbl">Data</span>
+    <div class="seg" id="dataSeg">
+      <button data-k="small" class="on">5 points: 3, 5, 7, 8, 12</button>
+      <button data-k="wait">12 wait times (min)</button>
+    </div></div>
+    <div class="group"><span class="lbl">Statistic</span>
+    <div class="seg" id="statSeg">
+      <button data-k="mean" class="on">Mean</button>
+      <button data-k="median">Median</button>
+      <button data-k="var">Variance (÷n)</button>
+    </div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="step">1</span>The original sample</h2>
+      <div class="tiles" id="tiles"></div>
+      <div class="orig" id="orig"></div>
+      <div class="legend" id="legendB">
+        <span><span class="sw" style="background:var(--coral)"></span>picked in this resample (badge = how many times)</span>
+        <span><span class="sw" style="background:#c9ccd3"></span>left out this time</span>
+      </div>
+      <div class="legend hide" id="legendJ">
+        <span><span class="sw" style="background:#c64a3a"></span>the one point left out</span>
+        <span><span class="sw" style="background:#a9c0e3"></span>the n − 1 points kept</span>
+      </div>
+
+      <div class="divider"></div>
+      <h2><span class="step">2</span><span id="step2">Current resample</span></h2>
+      <div class="draws" id="draws"></div>
+      <div class="stat-line" id="curStat"></div>
+
+      <div class="btns" id="btnsB">
+        <button class="btn" id="one">Draw one (slow)</button>
+        <button class="btn ghost" id="ten">+10</button>
+        <button class="btn ghost" id="thousand">+1,000</button>
+        <button class="btn ghost" id="reset">Reset</button>
+      </div>
+      <div class="btns hide" id="btnsJ">
+        <button class="btn" id="jnext">Leave out next</button>
+        <button class="btn ghost" id="jall">Run all</button>
+        <button class="btn ghost" id="jreset">Reset</button>
+      </div>
+    </div>
+
+    <!-- BOOTSTRAP RIGHT -->
+    <div class="card" id="rightB">
+      <h2><span class="step">3</span>Bootstrap distribution</h2>
+      <svg id="hist" viewBox="0 0 520 260" width="100%" role="img" aria-label="Histogram of bootstrap statistics"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:linear-gradient(#6f97cf,#2f5d9e)"></span>bootstrap estimates</span>
+        <span><span class="sw" style="background:var(--coral)"></span>original estimate</span>
+        <span><span class="sw" style="background:var(--green)"></span>95% percentile interval</span>
+      </div>
+      <div class="nums">
+        <div class="num"><div class="k">Resamples B</div><div class="v" id="B">0</div></div>
+        <div class="num hl"><div class="k">Bootstrap se</div><div class="v" id="se">—</div></div>
+        <div class="num hl"><div class="k">95% CI</div><div class="v" id="ci" style="font-size:16px">—</div></div>
+      </div>
+      <div class="nums" style="grid-template-columns:1fr 1fr">
+        <div class="num"><div class="k" id="formulaK">Formula se</div><div class="v" id="formula">—</div></div>
+        <div class="num"><div class="k">Avg. share of points left out</div><div class="v" id="leftout">—</div></div>
+      </div>
+    </div>
+
+    <!-- JACKKNIFE RIGHT -->
+    <div class="card hide" id="rightJ">
+      <h2><span class="step">3</span>Leave-one-out estimates</h2>
+      <svg id="dots" viewBox="0 0 520 170" width="100%" role="img" aria-label="Leave-one-out estimates"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#2f5d9e;border-radius:50%"></span>one dot per point left out (label = which point)</span>
+        <span><span class="sw" style="background:var(--coral)"></span>full sample</span>
+        <span><span class="sw" style="background:var(--navy)"></span>average of the dots</span>
+        <span><span class="sw" style="background:var(--green)"></span>jackknife-corrected</span>
+      </div>
+      <div class="tablewrap"><table class="jtable"><thead><tr><th>i</th><th>point left out</th><th>estimate without it</th></tr></thead><tbody id="jrows"></tbody></table></div>
+      <div class="nums">
+        <div class="num"><div class="k">Full-sample estimate</div><div class="v" id="jfull">—</div></div>
+        <div class="num"><div class="k">Average of the dots</div><div class="v" id="jbar">—</div></div>
+        <div class="num hl"><div class="k">Bias estimate</div><div class="v" id="jbias">—</div><div class="formula">(n−1)(average − full)</div></div>
+      </div>
+      <div class="nums" style="grid-template-columns:1fr 1fr">
+        <div class="num ok"><div class="k">Jackknife-corrected estimate</div><div class="v" id="jcorr">—</div><div class="formula">full − bias = n·full − (n−1)·average</div></div>
+        <div class="num hl"><div class="k">Jackknife se</div><div class="v" id="jse">—</div><div class="formula">√[(n−1)/n · Σ(dot − average)²]</div></div>
+      </div>
+      <div class="note" id="jnote"></div>
+    </div>
+  </div>
+
+  <div class="say" id="say"></div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const DATA = {
+  small:{vals:[3,5,7,8,12], unit:""},
+  wait:{vals:[2.1,3.4,1.2,5.8,2.9,4.4,0.7,3.1,6.5,2.4,1.9,3.8], unit:" min"}
+};
+const SNAME={mean:"mean",median:"median",var:"plug-in variance"};
+let mode="boot", dataKey="small", statKey="mean", boots=[], leftShares=[], busy=false, jdone=[], jlast=-1;
+let seed=6875;
+function rng(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }
+
+const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const median=a=>{const b=[...a].sort((x,y)=>x-y),m=b.length>>1;return b.length%2?b[m]:(b[m-1]+b[m])/2;};
+const pvar=a=>{const m=mean(a);return a.reduce((s,v)=>s+(v-m)**2,0)/a.length;};
+const stat=a=>statKey==="mean"?mean(a):statKey==="median"?median(a):pvar(a);
+const sd=a=>{if(a.length<2)return NaN;const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));};
+const q=(a,p)=>{const b=[...a].sort((x,y)=>x-y);const h=(b.length-1)*p,lo=Math.floor(h),hi=Math.ceil(h);return b[lo]+(b[hi]-b[lo])*(h-lo);};
+const fmt=(v,d=3)=>Number.isFinite(v)?(+v.toFixed(d)).toString():"—";
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const V=()=>DATA[dataKey].vals;
+
+/* ---------- shared ---------- */
+function renderTilesBoot(c){
+  $("tiles").innerHTML=V().map((x,i)=>{
+    const k=c?c[i]:0, cls=c?(k>0?"hit":"out"):"";
+    return `<div class="tile ${cls}" id="t${i}">${x}${k>0?`<span class="badge">×${k}</span>`:""}</div>`;
+  }).join("");
+}
+function renderTilesJack(drop){
+  $("tiles").innerHTML=V().map((x,i)=>{
+    const cls=drop<0?"":(i===drop?"dropped":"kept");
+    return `<div class="tile ${cls}" id="t${i}">${x}</div>`;
+  }).join("");
+}
+function renderOrig(){
+  const v=V(), n=v.length;
+  $("orig").innerHTML=`n = <b>${n}</b> &nbsp;·&nbsp; full-sample ${SNAME[statKey]} = <b>${fmt(stat(v))}</b>${statKey==="var"?"":DATA[dataKey].unit}`;
+}
+function renderHeader(){
+  if(mode==="boot"){
+    $("title").textContent="The Bootstrap, one resample at a time";
+    $("subtitle").innerHTML="Draw <i>n</i> values from the data <b>with replacement</b>, compute the statistic, repeat. The spread of the results is the standard error.";
+    $("foot").innerHTML='Same thing in R: <code>replicate(B, median(sample(x, replace = TRUE)))</code>, then <code>sd()</code> and <code>quantile(…, c(.025,.975))</code>.';
+  }else{
+    $("title").textContent="The Jackknife, one point left out at a time";
+    $("subtitle").innerHTML="Remove <b>one observation</b>, recompute the statistic, put it back, remove the next. Exactly <i>n</i> times, no randomness. Use the results to correct bias and get a standard error.";
+    $("foot").innerHTML='Same thing in R: <code>th.i &lt;- sapply(1:n, function(i) stat(x[-i]))</code>, then bias <code>(n-1)*(mean(th.i) - stat(x))</code>.';
+  }
+}
+
+/* ---------- bootstrap ---------- */
+function drawIdx(n){return Array.from({length:n},()=>Math.floor(rng()*n));}
+function counts(idx,n){const c=new Array(n).fill(0);idx.forEach(i=>c[i]++);return c;}
+function formulaBox(){
+  const v=V(),n=v.length;
+  if(statKey==="mean"){$("formulaK").textContent="Formula se (σ̂/√n)";$("formula").textContent=fmt(Math.sqrt(pvar(v))/Math.sqrt(n));}
+  else if(statKey==="median"){$("formulaK").textContent="Formula se for the median";$("formula").textContent="none simple";}
+  else{$("formulaK").textContent="Formula se for the variance";$("formula").textContent="messy";}
+}
+function renderBootStats(){
+  $("B").textContent=boots.length.toLocaleString();
+  $("se").textContent=boots.length>1?fmt(sd(boots)):"—";
+  $("ci").textContent=boots.length>=40?`(${fmt(q(boots,.025),2)}, ${fmt(q(boots,.975),2)})`:"need B ≥ 40";
+  $("leftout").textContent=leftShares.length?Math.round(100*mean(leftShares))+"%":"—";
+  drawHist();
+}
+function drawHist(){
+  const svg=$("hist"), W=520,H=260,L=40,R=12,T=14,Bm=36;
+  const v=V(), s0=stat(v);
+  let lo,hi;
+  if(statKey==="var"){lo=0;hi=Math.max(s0*2.6,...(boots.length?[q(boots,.995)]:[0]));}
+  else{lo=Math.min(...v);hi=Math.max(...v);const sp=hi-lo;lo-=sp*.02;hi+=sp*.02;}
+  const nb=statKey==="median"?Math.min(48,Math.max(12,v.length*4)):36;
+  const w=(hi-lo)/nb, bins=new Array(nb).fill(0);
+  boots.forEach(b=>{let k=Math.floor((b-lo)/w);k=Math.max(0,Math.min(nb-1,k));bins[k]++;});
+  const mx=Math.max(1,...bins);
+  const X=x=>L+(x-lo)/(hi-lo)*(W-L-R), Y=c=>H-Bm-(c/mx)*(H-Bm-T);
+  let g=`<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f97cf"/><stop offset="1" stop-color="#2f5d9e"/></linearGradient></defs>`;
+  for(let i=1;i<=4;i++){const yy=T+(H-Bm-T)*i/4; g+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="#f0ece3"/>`;}
+  g+=`<line x1="${L}" y1="${H-Bm}" x2="${W-R}" y2="${H-Bm}" stroke="#d9d3c6"/>`;
+  bins.forEach((c,i)=>{ if(!c)return; const x=X(lo+i*w);
+    g+=`<rect x="${x+0.5}" y="${Y(c)}" width="${Math.max(1,X(lo+(i+1)*w)-x-1)}" height="${H-Bm-Y(c)}" fill="url(#bg)" rx="2.5"/>`;});
+  for(let i=0;i<=5;i++){const t=lo+(hi-lo)*i/5;
+    g+=`<text x="${X(t)}" y="${H-Bm+18}" font-size="12" text-anchor="middle" fill="#6c7489">${fmt(t,1)}</text>`;}
+  g+=`<text x="${(L+W-R)/2}" y="${H-4}" font-size="12" text-anchor="middle" fill="#6c7489">bootstrap ${SNAME[statKey]} (one value per resample)</text>`;
+  g+=`<text x="12" y="${(T+H-Bm)/2}" font-size="12" text-anchor="middle" fill="#6c7489" transform="rotate(-90 12 ${(T+H-Bm)/2})">count</text>`;
+  if(boots.length>=40){const a=q(boots,.025),b=q(boots,.975);
+    g+=`<rect x="${X(a)}" y="${H-Bm+2}" width="${Math.max(2,X(b)-X(a))}" height="5" fill="#2e8a64" rx="3"/>`;}
+  g+=`<line x1="${X(s0)}" y1="${T-4}" x2="${X(s0)}" y2="${H-Bm}" stroke="#e07a3f" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+  g+=`<rect x="${X(s0)+6}" y="${T-6}" width="${70+String(fmt(s0,2)).length*7}" height="20" rx="10" fill="#e07a3f"/><text x="${X(s0)+14}" y="${T+8}" font-size="12" font-weight="600" fill="#fff">original = ${fmt(s0,2)}</text>`;
+  if(!boots.length) g+=`<text x="${(L+W-R)/2}" y="${(T+H-Bm)/2}" font-size="15" text-anchor="middle" fill="#9aa1af">No resamples yet</text>`;
+  svg.innerHTML=g;
+}
+function addResamples(k){
+  const v=V(),n=v.length; let last=null;
+  for(let r=0;r<k;r++){const idx=drawIdx(n); const vals=idx.map(i=>v[i]); boots.push(stat(vals));
+    const c=counts(idx,n); leftShares.push(c.filter(x=>x===0).length/n); last={vals,c};}
+  if(last){renderTilesBoot(last.c);
+    $("draws").innerHTML=last.vals.map(x=>`<span class="chip">${x}</span>`).join("");
+    $("curStat").innerHTML=`Last resample's ${SNAME[statKey]}: <b>${fmt(stat(last.vals))}</b>`;}
+  renderBootStats();
+}
+async function slowOne(){
+  if(busy)return; busy=true; setBusy(true);
+  const v=V(),n=v.length, idx=drawIdx(n), c=new Array(n).fill(0);
+  renderTilesBoot(null); $("draws").innerHTML=""; $("curStat").innerHTML=`Drawing ${n} values with replacement…`;
+  const per=n<=5?650:320;
+  for(let j=0;j<n;j++){
+    const i=idx[j]; c[i]++;
+    renderTilesBoot(c); document.querySelectorAll(".tile").forEach((t,ti)=>{ if(!c[ti]) t.classList.remove("out"); });
+    const t=$("t"+i); t.classList.add("flash");
+    $("draws").insertAdjacentHTML("beforeend",`<span class="chip">${v[i]}</span>`);
+    await sleep(per); t.classList.remove("flash");
+  }
+  renderTilesBoot(c);
+  const vals=idx.map(i=>v[i]), s=stat(vals); boots.push(s); leftShares.push(c.filter(x=>x===0).length/n);
+  $("curStat").innerHTML=`Resample ${SNAME[statKey]}: <b>${fmt(s)}</b> &nbsp;·&nbsp; ${c.filter(x=>x===0).length} of ${n} points left out`;
+  renderBootStats(); busy=false; setBusy(false);
+}
+
+/* ---------- jackknife ---------- */
+function jEstimates(){const v=V();return v.map((_,i)=>stat(v.filter((_,j)=>j!==i)));}
+function renderJack(){
+  const v=V(), n=v.length, th=stat(v), all=jEstimates();
+  const done=jdone.map(i=>all[i]);
+  $("jrows").innerHTML=jdone.map((i,k)=>`<tr class="${k===jdone.length-1?"new":""}"><td>${i+1}</td><td>${v[i]}</td><td>${fmt(all[i])}</td></tr>`).join("")
+    || `<tr><td colspan="3" style="font-family:Inter;color:#9aa1af">Press “Leave out next”.</td></tr>`;
+  const tb=wrap=>wrap;
+  $("jfull").textContent=fmt(th);
+  const complete=jdone.length===n;
+  const bar=done.length?mean(done):NaN;
+  $("jbar").textContent=done.length?fmt(bar)+(complete?"":" …"):"—";
+  if(complete){
+    const bias=(n-1)*(bar-th), corr=n*th-(n-1)*bar, se=Math.sqrt((n-1)/n*all.reduce((s,x)=>s+(x-bar)**2,0));
+    $("jbias").textContent=fmt(bias); $("jcorr").textContent=fmt(corr); $("jse").textContent=fmt(se);
+    let note="";
+    if(statKey==="var"){const S2=v.reduce((s,x)=>s+(x-mean(v))**2,0)/(n-1);
+      note=`<b>Bias fixed.</b> The plug-in variance (÷n) is biased low. The jackknife moved it from ${fmt(th)} to <b>${fmt(corr)}</b>, which is exactly S² = ${fmt(S2)} (÷(n−1)), the unbiased version.`;
+      $("jnote").className="note good";}
+    else if(statKey==="mean"){
+      note=`<b>No bias to fix.</b> The mean is already unbiased, so the bias estimate is 0. Jackknife se = ${fmt(se)}, exactly s/√n = ${fmt(sd(v)/Math.sqrt(n))}.`;
+      $("jnote").className="note good";}
+    else{
+      note=`<b>Careful: the jackknife is unreliable for the median.</b> Leaving one point out barely moves the median (only ${new Set(all.map(x=>fmt(x))).size} distinct values above), so the se is not trustworthy. Switch to the Bootstrap tab for the median.`;
+      $("jnote").className="note warn";}
+    $("jnote").innerHTML=note;
+  }else{
+    ["jbias","jcorr","jse"].forEach(id=>$(id).textContent="—");
+    $("jnote").className="note"; $("jnote").innerHTML=`Left out ${jdone.length} of ${n} points so far. The bias, corrected estimate and se appear once all ${n} are done.`;
+  }
+  drawDots(all,th,complete?bar:NaN,complete?n*th-(n-1)*bar:NaN);
+}
+function drawDots(all,th,bar,corr){
+  const svg=$("dots"),W=520,H=170,L=24,R=24,base=120;
+  const v=V(),n=v.length;
+  const pts=[...all,th].concat(Number.isFinite(corr)?[corr]:[]);
+  let lo=Math.min(...pts),hi=Math.max(...pts); const sp=(hi-lo)||1; lo-=sp*.12; hi+=sp*.12;
+  const X=x=>L+(x-lo)/(hi-lo)*(W-L-R);
+  let g=`<line x1="${L}" y1="${base}" x2="${W-R}" y2="${base}" stroke="#d9d3c6"/>`;
+  for(let i=0;i<=5;i++){const t=lo+(hi-lo)*i/5; g+=`<line x1="${X(t)}" y1="${base}" x2="${X(t)}" y2="${base+4}" stroke="#d9d3c6"/><text x="${X(t)}" y="${base+18}" font-size="11" text-anchor="middle" fill="#6c7489">${fmt(t,2)}</text>`;}
+  g+=`<text x="${W/2}" y="${H-6}" font-size="12" text-anchor="middle" fill="#6c7489">${SNAME[statKey]} with one point left out</text>`;
+  const tag=(x,y,txt,col)=>{const w=txt.length*6.6+16; let tx=X(x)-w/2; tx=Math.max(2,Math.min(W-w-2,tx));
+    return `<rect x="${tx}" y="${y}" width="${w}" height="18" rx="9" fill="${col}"/><text x="${tx+w/2}" y="${y+13}" font-size="11" font-weight="600" text-anchor="middle" fill="#fff">${txt}</text>`;};
+  g+=`<line x1="${X(th)}" y1="14" x2="${X(th)}" y2="${base}" stroke="#e07a3f" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+  g+=tag(th,2,`full ${fmt(th,2)}`,"#e07a3f");
+  if(Number.isFinite(bar)){g+=`<line x1="${X(bar)}" y1="36" x2="${X(bar)}" y2="${base}" stroke="#1f3a68" stroke-width="2.5"/>`; g+=tag(bar,24,`avg ${fmt(bar,2)}`,"#1f3a68");}
+  if(Number.isFinite(corr)){g+=`<line x1="${X(corr)}" y1="58" x2="${X(corr)}" y2="${base}" stroke="#2e8a64" stroke-width="2.5" stroke-dasharray="2 3"/>`; g+=tag(corr,46,`jack ${fmt(corr,2)}`,"#2e8a64");}
+  const seen={};
+  jdone.forEach(i=>{const x=all[i],key=fmt(x,4); seen[key]=(seen[key]||0)+1; const y=base-9-(seen[key]-1)*15;
+    g+=`<circle cx="${X(x)}" cy="${y}" r="${i===jlast?7.5:6}" fill="${i===jlast?"#e07a3f":"#2f5d9e"}" stroke="#fff" stroke-width="2"><title>left out ${v[i]}: ${fmt(x)}</title></circle>`;
+    if(n<=6) g+=`<text x="${X(x)}" y="${base+32}" font-size="10.5" font-weight="600" text-anchor="middle" fill="#2f5d9e">−${v[i]}</text>`;});
+  svg.innerHTML=g;
+}
+async function jNext(){
+  const v=V(),n=v.length; if(jdone.length>=n||busy)return;
+  const i=jdone.length; jlast=i;
+  renderTilesJack(i);
+  const kept=v.filter((_,j)=>j!==i);
+  $("draws").innerHTML=kept.map(x=>`<span class="chip kept">${x}</span>`).join("");
+  $("curStat").innerHTML=`Left out <b>${v[i]}</b> → ${SNAME[statKey]} of the other ${n-1}: <b>${fmt(stat(kept))}</b>`;
+  jdone.push(i); renderJack();
+}
+async function jAll(){
+  if(busy)return; busy=true; setBusy(true);
+  const n=V().length; const per=n<=5?700:280;
+  while(jdone.length<n){ await jNextNoBusy(); await sleep(per); }
+  busy=false; setBusy(false);
+}
+async function jNextNoBusy(){const b=busy;busy=false;await jNext();busy=b;}
+function jReset(){jdone=[];jlast=-1;renderTilesJack(-1);$("draws").innerHTML="";
+  $("curStat").innerHTML=`Press <b style="font-family:Inter">Leave out next</b> to remove the first point.`;renderJack();}
+
+/* ---------- talking points ---------- */
+function renderSay(){
+  const v=V(),n=v.length;
+  if(mode==="boot"){
+    const tail = statKey==="median"
+      ? `<li>The histogram is <b>lumpy</b>: a median of ${n} numbers can only take a handful of values. There is no neat formula for its se; the bootstrap gives one anyway.</li>`
+      : statKey==="mean" ? `<li>Compare <b>bootstrap se</b> with the formula <b>σ̂/√n</b>: they agree (the bootstrap uses the divide-by-<i>n</i> variance).</li>`
+      : `<li>The variance histogram is <b>skewed right</b>: variances can't go below 0. The percentile CI handles that automatically.</li>`;
+    $("say").innerHTML=`<div class="t">What to say while clicking</div><ol>
+      <li><b>Draw one (slow):</b> “Each draw puts the value back, so some show up twice and some not at all.” Point at the badges and the grey tiles.</li>
+      <li>“This resample is a <i>pretend new sample</i> from the same population. Its ${SNAME[statKey]} is a little different from the original.”</li>
+      <li><b>+10, then +1,000:</b> “Doing it thousands of times shows how much the ${SNAME[statKey]} wobbles from sample to sample. The width of this histogram is the standard error.”</li>
+      <li>“On average about <b>a third</b> of the points are left out of each resample: (1 − 1/n)<sup>n</sup> = ${Math.round(100*Math.pow(1-1/n,n))}% for n = ${n}, heading to e<sup>−1</sup> ≈ 37% for large n.”</li>${tail}</ol>`;
+  }else{
+    const tail = statKey==="var"
+      ? `<li><b>The payoff:</b> “The plug-in variance divides by n, so it is biased low. The jackknife correction lands <i>exactly</i> on S², which divides by n − 1.” (Use the 5-point data: 9.2 → 11.5.)</li>`
+      : statKey==="mean" ? `<li>“For the mean there is no bias, so the correction is 0, and the jackknife se is exactly s/√n. A good sanity check.”</li>`
+      : `<li>“Look how few distinct values the dots take: removing one point hardly moves a median. That is why the jackknife fails here; use the bootstrap.”</li>`;
+    $("say").innerHTML=`<div class="t">What to say while clicking</div><ol>
+      <li><b>Leave out next:</b> “Remove one observation (red), recompute with the other ${n-1}, put it back.” Each click adds one dot.</li>
+      <li>“Unlike the bootstrap, nothing is random: there are exactly ${n} leave-one-out samples, and everyone gets the same answer.”</li>
+      <li>“The average of the dots (navy line) sits a bit away from the full-sample estimate (orange). That gap, times n − 1, estimates the bias.”</li>
+      <li><b>Why n − 1?</b> “Bias is roughly β/n. Dropping one point changes it to β/(n−1). The difference is about β/n², so multiplying by n − 1 recovers β/n.”</li>${tail}</ol>`;
+  }
+}
+
+/* ---------- wiring ---------- */
+function setBusy(b){["one","ten","thousand","reset","jnext","jall","jreset"].forEach(id=>$(id).disabled=b);}
+function resetAll(){
+  boots=[];leftShares=[];seed=6875;
+  renderHeader(); renderOrig(); renderSay();
+  const B=mode==="boot";
+  $("rightB").classList.toggle("hide",!B); $("rightJ").classList.toggle("hide",B);
+  $("btnsB").classList.toggle("hide",!B); $("btnsJ").classList.toggle("hide",B);
+  $("legendB").classList.toggle("hide",!B); $("legendJ").classList.toggle("hide",B);
+  $("step2").textContent=B?"Current resample":"The n − 1 points kept";
+  if(B){renderTilesBoot(null);$("draws").innerHTML="";
+    $("curStat").innerHTML='Press <b style="font-family:Inter">Draw one</b> to start.';formulaBox();renderBootStats();}
+  else jReset();
+}
+function seg(id,cb){$(id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b||busy)return;
+  [...$(id).children].forEach(x=>x.classList.toggle("on",x===b));cb(b.dataset.k);});}
+seg("modeSeg",k=>{mode=k;resetAll();});
+seg("dataSeg",k=>{dataKey=k;resetAll();});
+seg("statSeg",k=>{statKey=k;resetAll();});
+$("one").onclick=slowOne; $("ten").onclick=()=>addResamples(10); $("thousand").onclick=()=>addResamples(1000); $("reset").onclick=resetAll;
+$("jnext").onclick=jNext; $("jall").onclick=jAll; $("jreset").onclick=jReset;
+resetAll();
+</script>
+</body>
+</html>
